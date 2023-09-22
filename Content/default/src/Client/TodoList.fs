@@ -40,20 +40,6 @@ let update (msg: Msg) (model: Model) : Model * Cmd<Msg> =
 open Feliz
 open Feliz.Bulma
 
-let navBrand =
-    Bulma.navbarBrand.div [
-        Bulma.navbarItem.a [
-            prop.href "https://safe-stack.github.io/"
-            navbarItem.isActive
-            prop.children [
-                Html.img [
-                    prop.src "/favicon.png"
-                    prop.alt "Logo"
-                ]
-            ]
-        ]
-    ]
-
 let view (model: Model) (dispatch: Msg -> unit) =
     Bulma.box [
         Bulma.content [
