@@ -1,27 +1,35 @@
 module Index
 
 open Elmish
+open Shared
 open Feliz.Router
+open Fable.Remoting.Client
 
-[<RequireQualifiedAccess>]
+
 type Url =
     | TodoList
     | Counter
     | NotFound
+type Model = {
+    CurrentUrl: Url
+    Count: int
+    Todos: Todo List
+    Input: string
+    }
+let TodoApi =
+    Remoting.createApi ()
+    |> Remoting.withRouteBuilder Route.builder
+    |> Remoting.buildProxy<ITodosApi>
 
 type Msg =
-    | TodoListMsg of TodoList.Msg
-    | CounterMsg of Counter.Msg
+    | Increment
+    | Decrement
+    | Reset
+    | GotTodos of Todo list
+    | SetInput of string
+    | AddTodo
+    | AddedTodo of Todo
     | UrlChanged of Url
-
-type Page =
-    | TodoList of TodoList.Model
-    | Counter of Counter.Model
-    | NotFound
-type Model = {
-    CurrentPage: Page
-    CurrentUrl: Url
-    }
 
 let parseUrl =
     function
@@ -29,38 +37,27 @@ let parseUrl =
     | [ "counter" ] -> Url.Counter
     | _ -> Url.NotFound
 
+let init () : Model * Cmd<Msg>  =
+    let url = Router.currentPath() |> parseUrl
+    let command = Cmd.OfAsync.perform TodoApi.getTodos () GotTodos
+    {Count=0; CurrentUrl = url; Input = ""; Todos = [] },  command
 
-let initFromUrl url =
-    match url with
-    | Url.TodoList ->
-        let todoModel, command = TodoList.init ()
-        let model = {CurrentPage = TodoList todoModel; CurrentUrl = url }
-        model, command |> Cmd.map TodoListMsg
-    | Url.Counter ->
-        let counterModel, command = Counter.init ()
-        let model = {CurrentPage = Counter counterModel; CurrentUrl = url }
-        model, command |> Cmd.map CounterMsg
-    | Url.NotFound ->
-        let model = { CurrentPage = NotFound; CurrentUrl = url }
-        model, Cmd.none
-
-let init () : Model * Cmd<Msg> =
-    (Router.currentPath())
-    |> parseUrl
-    |> initFromUrl
 
 let update (msg: Msg) (model: Model) : Model * Cmd<Msg> =
-    match model.CurrentPage, msg with
-    | TodoList todo, TodoListMsg todoMsg ->
-        let newTodoModel, msg = TodoList.update todoMsg todo
-        let newModel = {model with CurrentPage = TodoList newTodoModel }
-        newModel, msg |> Cmd.map TodoListMsg
-    | Counter counter, CounterMsg counterMsg ->
-        let newCounterModel, msg = Counter.update counterMsg counter
-        let newModel = {model with CurrentPage = Counter newCounterModel }
-        newModel, msg |> Cmd.map CounterMsg
-    | _, UrlChanged url ->
-        initFromUrl url
+    match msg with
+    | Increment -> { model with Count = model.Count + 1 }, Cmd.none
+    | Decrement -> { model with Count = model.Count - 1 }, Cmd.none
+    | Reset -> { model with Count = 0 }, Cmd.none
+    | GotTodos todos -> { model with Todos = todos }, Cmd.none
+    | SetInput value -> { model with Input = value }, Cmd.none
+    | AddTodo ->
+        let todo = Todo.create model.Input
+        let cmd = Cmd.OfAsync.perform TodoApi.addTodo todo AddedTodo
+
+        { model with Input = "" }, cmd
+    | AddedTodo todo -> { model with Todos = model.Todos @ [ todo ] }, Cmd.none
+    | UrlChanged url ->
+        {model with CurrentUrl = url}, Cmd.none
 
 open Feliz
 open Feliz.Bulma
@@ -79,12 +76,70 @@ let navBrand =
             ]
         ]
     ]
-let content page dispatch =
-    match page with
-    | TodoList todoModel -> TodoList.view todoModel (TodoListMsg>>dispatch)
-    | Counter counterModel -> Counter.View counterModel (CounterMsg>>dispatch)
-    | NotFound ->
-        Bulma.box "page not found"
+
+let TodoView (model: Model) (dispatch: Msg -> unit) =
+    Bulma.box [
+        Bulma.content [
+            Html.ol [
+                for todo in model.Todos do
+                    Html.li [ prop.text todo.Description ]
+            ]
+        ]
+        Bulma.field.div [
+            field.isGrouped
+            prop.children [
+                Bulma.control.p [
+                    control.isExpanded
+                    prop.children [
+                        Bulma.input.text [
+                            prop.value model.Input
+                            prop.placeholder "What needs to be done?"
+                            prop.onChange (fun x -> SetInput x |> dispatch)
+                        ]
+                    ]
+                ]
+                Bulma.control.p [
+                    Bulma.button.a [
+                        color.isPrimary
+                        prop.disabled (Todo.isValid model.Input |> not)
+                        prop.onClick (fun _ -> dispatch AddTodo)
+                        prop.text "Add"
+                    ]
+                ]
+            ]
+        ]
+    ]
+
+let CounterView (model: Model) (dispatch: Msg -> unit) =
+    Bulma.box [
+        Bulma.content [
+            prop.style [ style.textAlign.center ]
+            prop.text model.Count
+        ]
+        Bulma.columns [
+            Bulma.column [
+                Bulma.button.a [
+                    color.isPrimary
+                    prop.onClick (fun _ -> dispatch Increment)
+                    prop.text "Increment"
+                ]
+            ]
+            Bulma.column [
+                Bulma.button.a [
+                    color.isDanger
+                    prop.onClick (fun _ -> dispatch Decrement)
+                    prop.text "Decrement"
+                ]
+            ]
+            Bulma.column [
+                Bulma.button.a [
+                    color.isInfo
+                    prop.onClick (fun _ -> dispatch Reset)
+                    prop.text "Reset"
+                ]
+            ]
+        ]
+    ]
 
 
 let view (model: Model) (dispatch: Msg -> unit) =
@@ -115,7 +170,10 @@ let view (model: Model) (dispatch: Msg -> unit) =
                                         text.hasTextCentered
                                         prop.text "SAFE.App"
                                     ]
-                                    content model.CurrentPage dispatch
+                                    match model.CurrentUrl with
+                                    | Counter -> CounterView model dispatch
+                                    | TodoList -> TodoView model dispatch
+                                    | NotFound -> Bulma.box "Page Not Found"
                                 ]
                             ]
                         ]

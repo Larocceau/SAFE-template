@@ -7,8 +7,6 @@
     <ItemGroup>
         <None Include="index.html" />
         <None Include="paket.references" />
-        <Compile Include="TodoList.fs" />
-        <Compile Include="Counter.fs" />
         <Compile Include="Index.fs" />
         <Compile Include="App.fs" />
     </ItemGroup>
