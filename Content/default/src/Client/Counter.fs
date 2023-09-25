@@ -3,6 +3,7 @@ module Counter
 open Feliz.Bulma
 open Elmish
 open Feliz
+open Feliz.UseElmish
 
 type Model = { Count: int }
 
@@ -19,7 +20,10 @@ let update (msg: Msg) (model: Model)  =
     | Decrement -> { model with Count = model.Count - 1 }, Cmd.none
     | Reset -> { model with Count = 0 }, Cmd.none
 
-let View (model: Model) (dispatch: Msg -> unit) =
+
+[<ReactComponent>]
+let View () =
+    let model, dispatch = React.useElmish(init, update, [||])
     Bulma.box [
         Bulma.content [
             prop.style [ style.textAlign.center ]

@@ -3,6 +3,7 @@ module TodoList
 open Elmish
 open Fable.Remoting.Client
 open Shared
+open Feliz.UseElmish
 
 type Model = { Todos: Todo List; Input: string }
 
@@ -39,8 +40,9 @@ let update (msg: Msg) (model: Model) : Model * Cmd<Msg> =
 
 open Feliz
 open Feliz.Bulma
-
-let view (model: Model) (dispatch: Msg -> unit) =
+[<ReactComponent>]
+let view () =
+    let model, dispatch = React.useElmish( init, update, [||])
     Bulma.box [
         Bulma.content [
             Html.ol [

@@ -10,13 +10,11 @@ type Url =
     | NotFound
 
 type Msg =
-    | TodoListMsg of TodoList.Msg
-    | CounterMsg of Counter.Msg
     | UrlChanged of Url
 
 type Page =
-    | TodoList of TodoList.Model
-    | Counter of Counter.Model
+    | TodoList
+    | Counter
     | NotFound
 type Model = {
     CurrentPage: Page
@@ -33,13 +31,11 @@ let parseUrl =
 let initFromUrl url =
     match url with
     | Url.TodoList ->
-        let todoModel, command = TodoList.init ()
-        let model = {CurrentPage = TodoList todoModel; CurrentUrl = url }
-        model, command |> Cmd.map TodoListMsg
+        let model = {CurrentPage = TodoList; CurrentUrl = url }
+        model, Cmd.none
     | Url.Counter ->
-        let counterModel, command = Counter.init ()
-        let model = {CurrentPage = Counter counterModel; CurrentUrl = url }
-        model, command |> Cmd.map CounterMsg
+        let model = {CurrentPage = Counter ; CurrentUrl = url }
+        model, Cmd.none
     | Url.NotFound ->
         let model = { CurrentPage = NotFound; CurrentUrl = url }
         model, Cmd.none
@@ -50,16 +46,8 @@ let init () : Model * Cmd<Msg> =
     |> initFromUrl
 
 let update (msg: Msg) (model: Model) : Model * Cmd<Msg> =
-    match model.CurrentPage, msg with
-    | TodoList todo, TodoListMsg todoMsg ->
-        let newTodoModel, msg = TodoList.update todoMsg todo
-        let newModel = {model with CurrentPage = TodoList newTodoModel }
-        newModel, msg |> Cmd.map TodoListMsg
-    | Counter counter, CounterMsg counterMsg ->
-        let newCounterModel, msg = Counter.update counterMsg counter
-        let newModel = {model with CurrentPage = Counter newCounterModel }
-        newModel, msg |> Cmd.map CounterMsg
-    | _, UrlChanged url ->
+    match msg with
+    | UrlChanged url ->
         initFromUrl url
 
 open Feliz
@@ -79,13 +67,6 @@ let navBrand =
             ]
         ]
     ]
-let content page dispatch =
-    match page with
-    | TodoList todoModel -> TodoList.view todoModel (TodoListMsg>>dispatch)
-    | Counter counterModel -> Counter.View counterModel (CounterMsg>>dispatch)
-    | NotFound ->
-        Bulma.box "page not found"
-
 
 let view (model: Model) (dispatch: Msg -> unit) =
     React.router[
@@ -115,7 +96,10 @@ let view (model: Model) (dispatch: Msg -> unit) =
                                         text.hasTextCentered
                                         prop.text "SAFE.App"
                                     ]
-                                    content model.CurrentPage dispatch
+                                    match model.CurrentPage with
+                                    | TodoList -> Counter.View()
+                                    | Counter -> Counter.View ()
+                                    | NotFound -> Bulma.box "page not found"
                                 ]
                             ]
                         ]

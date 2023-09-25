@@ -3,6 +3,7 @@ framework: net6.0
 storage: none
 
 nuget Feliz.Router ~> 3
+nuget Feliz.UseElmish
 nuget Fsharp.Core ~> 6
 nuget Fable.Remoting.Giraffe ~> 5
 nuget Saturn ~> 0
