@@ -1,3 +1,11 @@
+#### 1.0.2 - 17.01.25
+
+## What's Changed
+* explicitly set target branch by @Larocceau in https://github.com/Larocceau/SAFE-template/pull/3
+
+
+**Full Changelog**: https://github.com/Larocceau/SAFE-template/compare/1.0.1...1.0.2
+
 #### 5.0.9 - 29.11.2024
 
 * Fix error caused by restore on running tests + build solution before run, instead of just restore by @Larocceau in https://github.com/SAFE-Stack/SAFE-template/pull/640
@@ -699,3 +707,5 @@ https://www.compositional-it.com/news-blog/announcing-safe-template-v5/
 #### 0.0.1 - 22.10.2017
 
 * Initial release
+
+        
