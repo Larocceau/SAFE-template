@@ -15,13 +15,13 @@ jobs:
       - name: Tool Restore
         run: dotnet tool restore
 
-      - name: Release
-        env:
-          VERSION: ${{ github.ref_name }}
-          RELEASE_NOTES_URL: ${{ github.event.release.html_url }}
-          RELEASE_NOTES_BODY: ${{ github.event.release.body }}
-          NUGET_API_KEY: ${{secrets.NUGET_API_KEY}}
-        run: dotnet run --project Build.fsproj -- Release
+#      - name: Release
+#        env:
+#          VERSION: ${{ github.ref_name }}
+#          RELEASE_NOTES_URL: ${{ github.event.release.html_url }}
+#          RELEASE_NOTES_BODY: ${{ github.event.release.body }}
+#          NUGET_API_KEY: ${{secrets.NUGET_API_KEY}}
+#        run: dotnet run --project Build.fsproj -- Release
 
       - name: Update Release notes
         env:
